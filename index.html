@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: black;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const matrix = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}".split("");
+
+        const controls = {
+            speedOfRain: 35,
+            rarefaction: 0.975,
+            font_size: 12,
+            colorText: '#008F11',
+            concentration: 0,
+            disappearing: 0.04
+        }
+
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+
+        let font_size = controls.font_size;
+        let columns = Math.round(canvas.width / font_size);
+        let drops = Array(columns).fill(1);
+
+        let interval = setInterval(draw, controls.speedOfRain);
+
+        const gui = new dat.GUI();
+        gui.add(controls, 'speedOfRain', 0, 500).onChange(() => {
+            updateInterval();
+        });
+        gui.addColor(controls, 'colorText').onChange(() => { });
+        gui.add(controls, 'rarefaction', 0.799, 0.999, 0.001).onChange(() => {
+            reDraw();
+        });
+        gui.add(controls, 'concentration', 0, 10, 0.1).onChange(() => { });
+        gui.add(controls, 'disappearing', 0, 1, 0.01).onChange(() => { });
+        gui.add(controls, 'font_size', 1, 20, 1).onChange(() => {
+            reDraw();
+        });
+        gui.close();
+
+        function updateInterval() {
+            clearInterval(interval);
+            interval = null;
+            interval = setInterval(draw, controls.speedOfRain);
+        }
+
+        function reDraw() {
+            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth;
+            columns = Math.round(canvas.width / controls.font_size);
+            drops = Array(columns).fill(1);
+            font_size = controls.font_size;
+        }
+
+        function draw() {
+            ctx.fillStyle = `rgba(0, 0, 0, ${controls.disappearing})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = controls.colorText;
+            ctx.font = font_size + controls.concentration + "px arial";
+
+            for (var i = 0; i < drops.length; i++) {
+                const text = matrix[Math.floor(Math.random() * matrix.length)];
+                ctx.fillText(text, i * font_size, drops[i] * font_size);
+
+                //sending the drop back to the top randomly after it has crossed the screen
+                //adding a rarefaction to the reset to make the drops scattered on the Y axis
+                if (drops[i] * font_size > canvas.height && Math.random() > controls.rarefaction) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+    </script>
+</body>
+
+</html>
